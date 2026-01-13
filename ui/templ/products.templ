@@ -47,7 +47,7 @@ templ Products(tc *TemplateContext, products []view.Product, page int, numPages 
 								for i, pt := range product.PriceTiers {
 									if product.Inventory >= pt.Quantity {
 										<a class="text--small" href={ fmt.Sprintf("/product?id=%s&pt=%d", product.ID, i) }>
-											{ fmt.Sprintf("%dg %s %s/pcs", pt.Quantity, tc.Fiat2(pt.PriceCent), tc.PricePerUnit(pt.PriceCent, pt.Quantity)) }
+											{ fmt.Sprintf("%dpcs %s %s/pcs", pt.Quantity, tc.Fiat2(pt.PriceCent), tc.PricePerUnit(pt.PriceCent, pt.Quantity)) }
 										</a>
 									}
 								}
