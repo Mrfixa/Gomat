@@ -894,3 +894,118 @@ input.monospace {
     font-size: var(--font-size-xs);
     font-weight: 600;
 }
+
+/* CAPTCHA Container */
+.captcha-container {
+    text-align: center;
+    padding: var(--space-lg);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-lg);
+    margin: var(--space-md) 0;
+}
+
+.captcha-instructions {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+}
+
+.captcha-address {
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+}
+
+.captcha-address code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-lg);
+    letter-spacing: 2px;
+    color: var(--accent-secondary);
+}
+
+.captcha-input input {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xl);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    width: 150px;
+}
+
+/* Proof of Work */
+.pow-container {
+    padding: var(--space-lg);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-lg);
+    margin: var(--space-md) 0;
+}
+
+.pow-instructions {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+}
+
+.pow-prefix {
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+    font-family: var(--font-mono);
+}
+
+.pow-input input {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+}
+
+.pow-hint {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    margin-top: var(--space-sm);
+}
+
+/* Jail/Warning Banner */
+.jail-banner {
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    padding: var(--space-sm) var(--space-md);
+    text-align: center;
+    font-weight: 500;
+}
+
+.jail-banner a {
+    color: white;
+    text-decoration: underline;
+}
+
+/* 2FA Page */
+.twofa-container {
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.twofa-message {
+    padding: var(--space-lg);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-lg);
+    margin: var(--space-md) 0;
+}
+
+.twofa-message pre {
+    font-family: var(--font-mono);
+    background: var(--bg-primary);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    margin: var(--space-md) 0;
+    word-break: break-all;
+    text-align: left;
+}
+
+.twofa-code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--accent-secondary);
+    letter-spacing: 4px;
+}
