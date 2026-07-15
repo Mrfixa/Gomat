@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // PGPService handles PGP encryption/decryption for 2FA
@@ -347,5 +348,3 @@ func (s *JailService) VerifyPoW(prefix string, solution string, difficulty int) 
 	hashInt := new(big.Int).SetBytes(hash[:])
 	return hashInt.Cmp(required) <= 0
 }
-
-import "github.com/jackc/pgx/v5/pgxpool"
