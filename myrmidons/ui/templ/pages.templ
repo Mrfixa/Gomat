@@ -1,0 +1,615 @@
+package templ
+
+// LoginPage renders the login form
+templ LoginPage(tc *TemplateContext, error string) {
+	@Layout(tc) {
+		<div class="container" style="max-width: 400px; margin: 0 auto; padding-top: 50px;">
+			<div class="card">
+				<h1>Login</h1>
+				
+				if error != "" {
+					<div class="alert alert-error">{ error }</div>
+				}
+				
+				<form method="post" action="/login">
+					<div class="form-group">
+						<label class="form-label" for="username">Username</label>
+						<input 
+							type="text" 
+							id="username" 
+							name="username" 
+							class="form-input"
+							required
+							autocomplete="username"
+						/>
+					</div>
+					
+					<div class="form-group">
+						<label class="form-label" for="password">Password</label>
+						<input 
+							type="password" 
+							id="password" 
+							name="password" 
+							class="form-input"
+							required
+							autocomplete="current-password"
+						/>
+					</div>
+					
+					<button type="submit" class="btn btn-primary btn-block">Login</button>
+				</form>
+				
+				<p class="mt-md text-center text-muted">
+					Don't have an account? <a href="/register">Register</a>
+				</p>
+			</div>
+		</div>
+	}
+}
+
+// RegisterPage renders the registration form
+templ RegisterPage(tc *TemplateContext, error string) {
+	@Layout(tc) {
+		<div class="container" style="max-width: 400px; margin: 0 auto; padding-top: 50px;">
+			<div class="card">
+				<h1>Register</h1>
+				
+				if error != "" {
+					<div class="alert alert-error">{ error }</div>
+				}
+				
+				<form method="post" action="/register">
+					<div class="form-group">
+						<label class="form-label" for="username">Username</label>
+						<input 
+							type="text" 
+							id="username" 
+							name="username" 
+							class="form-input"
+							required
+							minlength="3"
+							maxlength="20"
+							pattern="[a-zA-Z0-9_]+"
+							autocomplete="username"
+						/>
+						<span class="form-hint">3-20 characters, letters, numbers, underscore</span>
+					</div>
+					
+					<div class="form-group">
+						<label class="form-label" for="password">Password</label>
+						<input 
+							type="password" 
+							id="password" 
+							name="password" 
+							class="form-input"
+							required
+							minlength="12"
+							autocomplete="new-password"
+						/>
+						<span class="form-hint">Minimum 12 characters</span>
+					</div>
+					
+					<div class="form-group">
+						<label class="form-label" for="password_confirm">Confirm Password</label>
+						<input 
+							type="password" 
+							id="password_confirm" 
+							name="password_confirm" 
+							class="form-input"
+							required
+							autocomplete="new-password"
+						/>
+					</div>
+					
+					<div class="form-group">
+						<label class="form-label" for="pgp_key">PGP Public Key (optional, for 2FA)</label>
+						<textarea 
+							id="pgp_key" 
+							name="pgp_key" 
+							class="form-textarea"
+							rows="5"
+							placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----"
+						></textarea>
+						<span class="form-hint">Your 2FA code will be encrypted with this key</span>
+					</div>
+					
+					<button type="submit" class="btn btn-primary btn-block">Create Account</button>
+				</form>
+				
+				<p class="mt-md text-center text-muted">
+					Already have an account? <a href="/login">Login</a>
+				</p>
+			</div>
+		</div>
+	}
+}
+
+// BrowsePage renders the product browsing page
+templ BrowsePage(tc *TemplateContext, products []*Product, categories []*Category, filters BrowseFilters) {
+	@Layout(tc) {
+		<div class="flex gap-lg">
+			<!-- Sidebar -->
+			<aside style="width: 250px; flex-shrink: 0;">
+				<div class="card">
+					<h3>Categories</h3>
+					<ul style="list-style: none;">
+						<li>
+							<a href="/browse" class={ "filter-link", filters.Category == "" ? "active" : "" }>
+								All Products
+							</a>
+						</li>
+						for _, cat := range categories {
+							<li>
+								<a 
+									href={ templ.URL("/browse?category=" + cat.Slug) }
+									class={ "filter-link", filters.Category == cat.Slug ? "active" : "" }
+								>
+									{ cat.Name }
+								</a>
+							</li>
+						}
+					</ul>
+				</div>
+				
+				<div class="card mt-md">
+					<h3>Filters</h3>
+					<form method="get" action="/browse">
+						<input type="hidden" name="category" value={ filters.Category }/>
+						
+						<div class="form-group">
+							<label class="form-label" for="search">Search</label>
+							<input type="text" id="search" name="search" class="form-input" value={ filters.Search }/>
+						</div>
+						
+						<div class="form-group">
+							<label>
+								<input type="checkbox" name="digital" value="1" checked={ filters.Digital }/>
+								Digital Only
+							</label>
+						</div>
+						
+						<button type="submit" class="btn btn-secondary btn-block">Apply Filters</button>
+					</form>
+				</div>
+			</aside>
+			
+			<!-- Main content -->
+			<main style="flex: 1;">
+				<div class="flex justify-between items-center mb-md">
+					<h2>Browse Products</h2>
+					
+					<select class="form-select" onchange="window.location.href=this.value" style="width: auto;">
+						<option value="?sort=newest">Newest</option>
+						<option value="?sort=price_low">Price: Low to High</option>
+						<option value="?sort=price_high">Price: High to Low</option>
+						<option value="?sort=rating">Rating</option>
+					</select>
+				</div>
+				
+				if len(products) == 0 {
+					<div class="card text-center">
+						<p class="text-muted">No products found</p>
+					</div>
+				} else {
+					<div class="grid grid-3">
+						for _, product := range products {
+							@ProductCard(*product)
+						}
+					</div>
+				}
+			</main>
+		</div>
+	}
+}
+
+// BrowseFilters holds browse filter state
+type BrowseFilters struct {
+	Category string
+	Search   string
+	Digital  bool
+	Sort     string
+}
+
+// ProductDetailPage renders a product detail page
+templ ProductDetailPage(tc *TemplateContext, product Product, vendor Vendor) {
+	@Layout(tc) {
+		<div class="card">
+			<div class="flex gap-lg">
+				<!-- Images -->
+				<div style="width: 400px; flex-shrink: 0;">
+					if len(product.Images) > 0 {
+						<img 
+							src={ product.Images[0] }
+							alt={ product.Title }
+							style="width: 100%; border-radius: 8px;"
+						/>
+					} else {
+						<div style="width: 100%; height: 300px; background: var(--bg-tertiary); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+							<span class="text-muted">No Image</span>
+						</div>
+					}
+				</div>
+				
+				<!-- Details -->
+				<div style="flex: 1;">
+					<h1>{ product.Title }</h1>
+					
+					<div class="flex items-center gap-md mb-md">
+						<span>by <a href={ templ.URL("/vendor/" + vendor.Username) }>{ vendor.Username }</a></span>
+						if vendor.IsLegacy {
+							<span class="badge badge-secondary">Legacy Vendor</span>
+						}
+						if product.IsDigital {
+							<span class="badge badge-primary">Digital</span>
+						}
+					</div>
+					
+					if product.Rating.GreaterThan(decimal.Zero) {
+						<div class="mb-md">
+							<span class="text-warning">★</span>
+							<span>{ product.Rating.String() }</span>
+							<span class="text-muted">({ product.ReviewCount } reviews)</span>
+						</div>
+					}
+					
+					<div class="mb-md">
+						<strong>Price:</strong>
+						if len(product.Prices) > 0 {
+							<span class="text-lg">{ product.Prices[0].PricePico.String() } XMR</span>
+						}
+					</div>
+					
+					<div class="mb-md">
+						<p>{ product.Description }</p>
+					</div>
+					
+					if product.ShipsFrom != "" {
+						<div class="mb-md">
+							<strong>Ships from:</strong> { product.ShipsFrom }
+						</div>
+					}
+					
+					<form method="post" action="/cart/add">
+						<input type="hidden" name="product_id" value={ product.ID.String() }/>
+						
+						<div class="form-group">
+							<label class="form-label" for="quantity">Quantity</label>
+							<input 
+								type="number" 
+								id="quantity" 
+								name="quantity" 
+								class="form-input"
+								value="1"
+								min="1"
+								style="width: 100px;"
+							/>
+						</div>
+						
+						<button type="submit" class="btn btn-primary btn-lg">Add to Cart</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	}
+}
+
+import "github.com/shopspring/decimal"
+
+// WalletPage renders the wallet page
+templ WalletPage(tc *TemplateContext, balance decimal.Decimal, address string) {
+	@Layout(tc) {
+		<div class="flex gap-lg">
+			<!-- Main wallet -->
+			<div style="flex: 1;">
+				<div class="wallet-balance mb-lg">
+					<p class="wallet-balance-label">Your Balance</p>
+					<p class="wallet-balance-amount">{ balance.String() } XMR</p>
+				</div>
+				
+				<div class="card">
+					<h3>Deposit</h3>
+					<p class="text-muted mb-md">Send XMR to your deposit address:</p>
+					
+					<div class="flex items-center gap-md">
+						<input 
+							type="text" 
+							class="form-input" 
+							value={ address }
+							readonly
+							style="font-family: monospace;"
+						/>
+						<button class="btn btn-secondary" onclick="navigator.clipboard.writeText(this.previousElementSibling.value)">
+							Copy
+						</button>
+					</div>
+					
+					<p class="text-muted mt-sm">
+						<small>Minimum deposit: 0.0001 XMR</small>
+					</p>
+				</div>
+			</div>
+			
+			<!-- Withdraw -->
+			<div style="width: 350px;">
+				<div class="card">
+					<h3>Withdraw</h3>
+					<form method="post" action="/wallet/withdraw">
+						<div class="form-group">
+							<label class="form-label" for="amount">Amount (XMR)</label>
+							<input 
+								type="text" 
+								id="amount" 
+								name="amount" 
+								class="form-input"
+								placeholder="0.000000000000"
+							/>
+						</div>
+						
+						<div class="form-group">
+							<label class="form-label" for="withdraw_address">Withdrawal Address</label>
+							<input 
+								type="text" 
+								id="withdraw_address" 
+								name="address" 
+								class="form-input"
+								placeholder="4..."
+							/>
+						</div>
+						
+						<button type="submit" class="btn btn-primary btn-block">Withdraw</button>
+					</form>
+					
+					<p class="text-muted mt-sm">
+						<small>Network fee: 0.00001 XMR</small>
+					</p>
+				</div>
+			</div>
+		</div>
+	}
+}
+
+// OrdersPage renders the orders list
+templ OrdersPage(tc *TemplateContext, orders []*Order) {
+	@Layout(tc) {
+		<h2>Your Orders</h2>
+		
+		if len(orders) == 0 {
+			<div class="card text-center">
+				<p class="text-muted">You haven't placed any orders yet.</p>
+				<a href="/browse" class="btn btn-primary">Start Shopping</a>
+			</div>
+		} else {
+			<div class="flex flex-col gap-md">
+				for _, order := range orders {
+					@OrderCard(*order)
+				}
+			</div>
+		}
+	}
+}
+
+// OrderDetailPage renders order details
+templ OrderDetailPage(tc *TemplateContext, order OrderDetail, canFinalize, canDispute bool) {
+	@Layout(tc) {
+		<div class="card">
+			<div class="flex justify-between items-center mb-md">
+				<h2>Order #{ order.ShortID }</h2>
+				@OrderStatus(order.Status)
+			</div>
+			
+			<!-- Items -->
+			<table class="table mb-lg">
+				<thead>
+					<tr>
+						<th>Product</th>
+						<th>Quantity</th>
+						<th>Price</th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, item := range order.Items {
+						<tr>
+							<td>{ item.Title }</td>
+							<td>{ item.Quantity }</td>
+							<td>{ item.Price } XMR</td>
+						</tr>
+					}
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="2"><strong>Total</strong></td>
+						<td><strong>{ order.Total } XMR</strong></td>
+					</tr>
+				</tfoot>
+			</table>
+			
+			<!-- Digital items -->
+			if len(order.DigitalItems) > 0 && order.Status == "finalized" {
+				<div class="card" style="background: var(--bg-tertiary);">
+					<h3>Your Digital Item(s)</h3>
+					<div class="alert alert-warning mb-md">
+						Save these items securely. They will not be shown again.
+					</div>
+					for _, item := range order.DigitalItems {
+						<div class="mb-md">
+							<p><strong>{ item.Title }</strong></p>
+							<form method="post" action={ "/order/" + order.ID + "/download" }>
+								<input type="hidden" name="item_id" value={ item.ID }/>
+								<button type="submit" class="btn btn-primary">Download</button>
+							</form>
+						</div>
+					}
+				</div>
+			}
+			
+			<!-- Actions -->
+			<div class="flex gap-md mt-lg">
+				if canFinalize {
+					<form method="post" action={ "/order/" + order.ID + "/finalize" }>
+						<button type="submit" class="btn btn-success">Finalize Order</button>
+					</form>
+				}
+				
+				if canDispute {
+					<form method="post" action={ "/order/" + order.ID + "/dispute" }>
+						<textarea 
+							name="statement" 
+							class="form-textarea" 
+							placeholder="Describe the issue..."
+							required
+						></textarea>
+						<button type="submit" class="btn btn-danger">Open Dispute</button>
+					</form>
+				}
+			</div>
+		</div>
+	}
+}
+
+// OrderDetail holds full order information
+type OrderDetail struct {
+	Order
+	Items       []OrderItem
+	DigitalItems []DigitalItem
+}
+
+// OrderItem represents an order item for display
+type OrderItem struct {
+	ID       string
+	Title    string
+	Quantity int
+	Price    string
+}
+
+// DigitalItem represents a digital item
+type DigitalItem struct {
+	ID    string
+	Title string
+}
+
+// JuryPage renders the jury dashboard
+templ JuryPage(tc *TemplateContext, assignments []*Dispute) {
+	@Layout(tc) {
+		<h2>Jury Dashboard</h2>
+		
+		if len(assignments) == 0 {
+			<div class="card text-center">
+				<p class="text-muted">No pending disputes to review.</p>
+			</div>
+		} else {
+			<div class="flex flex-col gap-md">
+				for _, dispute := range assignments {
+					@DisputeCard(*dispute)
+				}
+			</div>
+		}
+	}
+}
+
+// DAOPage renders the DAO governance page
+templ DAOPage(tc *TemplateContext, proposals []*Proposal, stats DAOStats) {
+	@Layout(tc) {
+		<div class="flex gap-lg">
+			<!-- Proposals -->
+			<div style="flex: 2;">
+				<div class="flex justify-between items-center mb-md">
+					<h2>DAO Proposals</h2>
+					<a href="/dao/proposals/new" class="btn btn-primary">Create Proposal</a>
+				</div>
+				
+				if len(proposals) == 0 {
+					<div class="card text-center">
+						<p class="text-muted">No active proposals.</p>
+					</div>
+				} else {
+					<div class="flex flex-col gap-md">
+						for _, proposal := range proposals {
+							@ProposalCard(*proposal)
+						}
+					</div>
+				}
+			</div>
+			
+			<!-- Stats sidebar -->
+			<div style="width: 300px;">
+				<div class="card">
+					<h3>Your Stats</h3>
+					<div class="mb-md">
+						<p class="text-muted">Voting Power</p>
+						<p class="text-xl">{ stats.VotingPower } XMR</p>
+					</div>
+					<div class="mb-md">
+						<p class="text-muted">Proposals Voted</p>
+						<p>{ stats.ProposalsVoted }</p>
+					</div>
+				</div>
+				
+				<div class="card mt-md">
+					<h3>Governance Info</h3>
+					<p class="text-muted">Voting Period</p>
+					<p>1 week</p>
+					<p class="text-muted mt-sm">Quorum Required</p>
+					<p>20% of total power</p>
+				</div>
+			</div>
+		</div>
+	}
+}
+
+// DAOStats holds DAO statistics for a user
+type DAOStats struct {
+	VotingPower     string
+	ProposalsVoted int
+}
+
+// ReservesPage renders the provable reserves page
+templ ReservesPage(tc *TemplateContext, proof *ReserveProof) {
+	@Layout(tc) {
+		<h2>Provable Reserves</h2>
+		
+		<div class="card mb-lg">
+			<p class="text-muted">
+				Myrmidons maintains provable reserves to demonstrate that customer funds are fully backed.
+				You can verify our reserves using the proof below.
+			</p>
+		</div>
+		
+		if proof != nil {
+			<div class="card">
+				<h3>Latest Reserve Proof</h3>
+				<p class="text-muted">Generated: { proof.Timestamp.Format("2006-01-02 15:04:05 UTC") }</p>
+				
+				<table class="table mt-md">
+					<tr>
+						<td>Total Wallet Balance</td>
+						<td><strong>{ proof.TotalBalancePico.String() } XMR</strong></td>
+					</tr>
+					<tr>
+						<td>User Balances</td>
+						<td>{ proof.UserBalancesPico.String() } XMR</td>
+					</tr>
+					<tr>
+						<td>Insurance Fund</td>
+						<td>{ proof.InsuranceBalancePico.String() } XMR</td>
+					</tr>
+					<tr>
+						<td>Operator Bond</td>
+						<td>{ proof.OperatorBondPico.String() } XMR</td>
+					</tr>
+				</table>
+				
+				<div class="mt-lg">
+					<h4>Verification</h4>
+					<p class="text-muted mb-sm">Merkle Root: { proof.MerkleRoot }</p>
+					<p class="text-muted mb-md">Signature: { proof.Signature }</p>
+					
+					<a href="/reserves/proof.txt" class="btn btn-secondary">Download Proof</a>
+				</div>
+			</div>
+		} else {
+			<div class="card text-center">
+				<p class="text-muted">No reserve proof available.</p>
+			</div>
+		}
+	}
+}
