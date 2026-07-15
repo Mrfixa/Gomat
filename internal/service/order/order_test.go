@@ -2,12 +2,14 @@ package order
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/gobugger/gomarket/internal/repo"
 	"github.com/gobugger/gomarket/internal/service/currency"
 	"github.com/gobugger/gomarket/internal/service/servicetest"
 	"github.com/gobugger/gomarket/internal/testutil"
 	"github.com/shopspring/decimal"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 )
@@ -146,4 +148,75 @@ func TestDecline(t *testing.T) {
 
 	servicetest.RequireBalanceForUser(t, qtx, customer.ID, currency.AddFee(order.TotalPricePico))
 	servicetest.RequireBalanceForUser(t, qtx, vendor.ID, decimal.NewFromInt(0))
+}
+
+// SECURE: Test order status transitions
+func TestValidOrderTransitions(t *testing.T) {
+	tests := []struct {
+		name     string
+		current  repo.OrderStatus
+		next     repo.OrderStatus
+		expected bool
+	}{
+		{"Pending to Paid", repo.OrderStatusPending, repo.OrderStatusPaid, true},
+		{"Pending to Cancelled", repo.OrderStatusPending, repo.OrderStatusCancelled, true},
+		{"Pending to Accepted", repo.OrderStatusPending, repo.OrderStatusAccepted, false},
+		{"Paid to Accepted", repo.OrderStatusPaid, repo.OrderStatusAccepted, true},
+		{"Paid to Declined", repo.OrderStatusPaid, repo.OrderStatusDeclined, true},
+		{"Accepted to Dispatched", repo.OrderStatusAccepted, repo.OrderStatusDispatched, true},
+		{"Dispatched to Finalized", repo.OrderStatusDispatched, repo.OrderStatusFinalized, true},
+		{"Dispatched to Disputed", repo.OrderStatusDispatched, repo.OrderStatusDisputed, true},
+		{"Disputed to Settled", repo.OrderStatusDisputed, repo.OrderStatusSettled, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := validTransition(tt.current, tt.next)
+			if result != tt.expected {
+				t.Errorf("validTransition(%s, %s) = %v, want %v", tt.current, tt.next, result, tt.expected)
+			}
+		})
+	}
+}
+
+// SECURE: Test idempotency key expiration
+func TestIdempotencyKeyExpiration(t *testing.T) {
+	key := &IdempotencyKey{
+		Operation: "test",
+		Timestamp: time.Now().Add(-24 * time.Hour),
+	}
+
+	if !key.IsExpired() {
+		t.Error("IdempotencyKey should be expired after 24 hours")
+	}
+
+	key.Timestamp = time.Now()
+	if key.IsExpired() {
+		t.Error("IdempotencyKey should not be expired immediately")
+	}
+}
+
+// SECURE: Test refund factor validation
+func TestValidateRefundFactor(t *testing.T) {
+	tests := []struct {
+		name    string
+		factor  float64
+		wantErr bool
+	}{
+		{"Valid 0", 0, false},
+		{"Valid 1", 1, false},
+		{"Valid 0.5", 0.5, false},
+		{"Invalid negative", -0.1, true},
+		{"Invalid over 1", 1.1, true},
+		{"Invalid precision", 0.00001, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateRefundFactor(tt.factor)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateRefundFactor(%f) error = %v, wantErr %v", tt.factor, err, tt.wantErr)
+			}
+		})
+	}
 }

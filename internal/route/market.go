@@ -9,6 +9,7 @@ import (
 	"github.com/gobugger/gomarket/ui/templ"
 	"github.com/gorilla/csrf"
 	"log/slog"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -22,13 +23,15 @@ func RouteMarket(app *application.Application) http.Handler {
 	}
 	port = parts[1]
 
+	// CSRF: Set Secure flag based on environment - true in production (non-dev mode)
 	CSRF := csrf.Protect(
 		[]byte(config.CsrfAuthKey),
-		csrf.Secure(false),
+		csrf.Secure(!config.DevMode()), // SECURE: Only set Secure cookie in non-dev mode
 		csrf.TrustedOrigins([]string{"localhost:" + port, config.OnionAddr}),
 		csrf.FieldName("csrf.Token"),
 		csrf.CookieName("_csrf"),
 		csrf.Path("/"),
+		csrf.SameSite(csrf.SameSiteLaxMode), // SECURE: SameSite=Lax for better security
 	)
 
 	r := chi.NewRouter()
@@ -74,7 +77,9 @@ func RouteMarket(app *application.Application) http.Handler {
 
 			r.Get("/register", app.Register)
 			r.Get("/login", app.Login)
-			r.Post("/register", app.HandleRegister)
+			
+			// Rate limit registration: 3 per hour per IP
+			r.With(httprate.LimitByIP(3, time.Hour)).Post("/register", app.HandleRegister)
 			r.Post("/login", app.HandleLogin)
 			r.Post("/login/2fa", app.Handle2FA)
 		})

@@ -151,12 +151,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	// SECURE: Initialize IP rate limiter
+	ipRateLimiter := app.NewIPRateLimiter()
+	ipTracking := app.NewIPTracking()
+
+	// SECURE: Start cleanup goroutine for IP rate limiter
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			ipRateLimiter.Cleanup()
+		}
+	}()
+
 	app := app.Application{
 		Db:               db,
 		SessionManager:   sessionManager,
 		MinioClient:      minioClient,
 		PaymentProcessor: paymentProcessor,
 		RiverClient:      rc,
+		IPRateLimiter:    ipRateLimiter,
+		IPTracking:       ipTracking,
 		UoW:              uow.New(db),
 	}
 
