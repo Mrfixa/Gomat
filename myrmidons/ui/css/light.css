@@ -1,0 +1,357 @@
+/* Myrmidons Light Theme
+ * Off-white backgrounds with deep blue (#1a237e) accents
+ * Dark charcoal text for readability
+ */
+
+/* ============================================
+   CSS Variables (Design Tokens) - Light Override
+   ============================================ */
+[data-theme="light"] {
+    /* Colors - Light Theme */
+    --bg-primary: #fafafa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f5f5f5;
+    --bg-elevated: #eeeeee;
+    
+    --accent-primary: #1a237e;
+    --accent-primary-hover: #0d1657;
+    --accent-secondary: #303f9f;
+    --accent-secondary-hover: #5c6bc0;
+    
+    --text-primary: #121212;
+    --text-secondary: #424242;
+    --text-muted: #757575;
+    --text-disabled: #bdbdbd;
+    
+    --border-color: #e0e0e0;
+    --border-focus: #1a237e;
+    
+    /* Status Colors */
+    --success: #2e7d32;
+    --warning: #f57c00;
+    --error: #c62828;
+    --info: #1565c0;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   Reset & Base Styles
+   ============================================ */
+[data-theme="light"] {
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+}
+
+/* ============================================
+   Typography
+   ============================================ */
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4,
+[data-theme="light"] h5,
+[data-theme="light"] h6 {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] p {
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] a {
+    color: var(--accent-secondary);
+}
+
+[data-theme="light"] a:hover {
+    color: var(--accent-secondary-hover);
+}
+
+[data-theme="light"] code {
+    background-color: var(--bg-tertiary);
+}
+
+[data-theme="light"] pre {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+/* ============================================
+   Layout Components
+   ============================================ */
+[data-theme="light"] .card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="light"] .card-header {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="light"] .card-footer {
+    border-top-color: var(--border-color);
+}
+
+/* ============================================
+   Navigation
+   ============================================ */
+[data-theme="light"] .navbar {
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .navbar-brand {
+    color: var(--accent-primary);
+}
+
+[data-theme="light"] .navbar-nav a {
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .navbar-nav a:hover,
+[data-theme="light"] .navbar-nav a.active {
+    color: var(--accent-primary);
+    background-color: var(--bg-tertiary);
+}
+
+/* ============================================
+   Forms
+   ============================================ */
+[data-theme="light"] .form-input,
+[data-theme="light"] .form-textarea,
+[data-theme="light"] .form-select {
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .form-input:focus,
+[data-theme="light"] .form-textarea:focus,
+[data-theme="light"] .form-select:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.15);
+}
+
+[data-theme="light"] .form-input::placeholder,
+[data-theme="light"] .form-textarea::placeholder {
+    color: var(--text-disabled);
+}
+
+[data-theme="light"] .form-label {
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+[data-theme="light"] .btn-primary {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+[data-theme="light"] .btn-primary:hover:not(:disabled) {
+    background-color: var(--accent-primary-hover);
+}
+
+[data-theme="light"] .btn-secondary {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .btn-secondary:hover:not(:disabled) {
+    background-color: var(--bg-elevated);
+}
+
+[data-theme="light"] .btn-success {
+    background-color: var(--success);
+}
+
+[data-theme="light"] .btn-warning {
+    background-color: var(--warning);
+}
+
+[data-theme="light"] .btn-danger {
+    background-color: var(--error);
+}
+
+[data-theme="light"] .btn-outline {
+    color: var(--accent-primary);
+    border: 1px solid var(--accent-primary);
+}
+
+[data-theme="light"] .btn-outline:hover:not(:disabled) {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+/* ============================================
+   Badges
+   ============================================ */
+[data-theme="light"] .badge-primary {
+    background-color: var(--accent-primary);
+}
+
+[data-theme="light"] .badge-secondary {
+    background-color: var(--accent-secondary);
+    color: white;
+}
+
+/* ============================================
+   Tables
+   ============================================ */
+[data-theme="light"] .table th {
+    background-color: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+[data-theme="light"] .table tbody tr:hover {
+    background-color: var(--bg-tertiary);
+}
+
+/* ============================================
+   Alerts & Messages
+   ============================================ */
+[data-theme="light"] .alert-success {
+    background-color: rgba(46, 125, 50, 0.08);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+[data-theme="light"] .alert-warning {
+    background-color: rgba(245, 124, 0, 0.08);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+[data-theme="light"] .alert-error {
+    background-color: rgba(198, 40, 40, 0.08);
+    border-color: var(--error);
+    color: var(--error);
+}
+
+[data-theme="light"] .alert-info {
+    background-color: rgba(21, 101, 192, 0.08);
+    border-color: var(--info);
+    color: var(--info);
+}
+
+/* ============================================
+   Theme Toggle
+   ============================================ */
+[data-theme="light"] .theme-toggle {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .theme-toggle-icon {
+    fill: var(--text-muted);
+}
+
+[data-theme="light"] .theme-toggle:hover {
+    border-color: var(--accent-primary);
+}
+
+/* ============================================
+   Order Status
+   ============================================ */
+[data-theme="light"] .status-pending {
+    background-color: rgba(245, 124, 0, 0.12);
+    color: var(--warning);
+}
+
+[data-theme="light"] .status-paid,
+[data-theme="light"] .status-shipped {
+    background-color: rgba(21, 101, 192, 0.12);
+    color: var(--info);
+}
+
+[data-theme="light"] .status-delivered,
+[data-theme="light"] .status-finalized {
+    background-color: rgba(46, 125, 50, 0.12);
+    color: var(--success);
+}
+
+[data-theme="light"] .status-disputed {
+    background-color: rgba(198, 40, 40, 0.12);
+    color: var(--error);
+}
+
+/* ============================================
+   Product Card
+   ============================================ */
+[data-theme="light"] .product-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .product-card:hover {
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-lg);
+}
+
+[data-theme="light"] .product-card-image {
+    background-color: var(--bg-tertiary);
+}
+
+[data-theme="light"] .product-card-title {
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .product-card-vendor {
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .product-card-price {
+    color: var(--accent-primary);
+}
+
+/* ============================================
+   Wallet
+   ============================================ */
+[data-theme="light"] .wallet-balance {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+[data-theme="light"] .footer {
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .footer-links a {
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .footer-links a:hover {
+    color: var(--accent-primary);
+}
+
+[data-theme="light"] .footer-copyright {
+    color: var(--text-muted);
+}
+
+/* ============================================
+   Utility Overrides
+   ============================================ */
+[data-theme="light"] .text-muted {
+    color: var(--text-muted);
+}
+
+[data-theme="light"] .text-success {
+    color: var(--success);
+}
+
+[data-theme="light"] .text-error {
+    color: var(--error);
+}
+
+[data-theme="light"] .text-warning {
+    color: var(--warning);
+}

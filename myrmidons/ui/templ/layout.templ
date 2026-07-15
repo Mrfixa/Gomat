@@ -1,0 +1,348 @@
+package templ
+
+import (
+	"context"
+)
+
+// TemplateContext holds data passed to templates
+type TemplateContext struct {
+	Locale   string
+	Theme    string
+	User     *User
+	Catalog  Catalog
+}
+
+// User represents the authenticated user
+type User struct {
+	ID       string
+	Username string
+	IsVendor bool
+	IsJuror  bool
+	IsAdmin  bool
+}
+
+// Catalog interface for translations
+type Catalog interface {
+	T(key string) string
+}
+
+// T creates a translation function for the current locale
+func T(ctx context.Context, key string) string {
+	if tc, ok := ctx.Value("templateContext").(*TemplateContext); ok {
+		if tc.Catalog != nil {
+			return tc.Catalog.T(key)
+		}
+	}
+	return key
+}
+
+// Layout is the main HTML layout
+templ Layout(tc *TemplateContext, children ...templ.Component) {
+	<!DOCTYPE html>
+	<html lang={ tc.Locale } data-theme={ tc.Theme }>
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>Myrmidons - Privacy-Preserving Marketplace</title>
+		
+		<!-- Theme stylesheets -->
+		<link rel="stylesheet" href="/static/css/dark.css"/>
+		<link rel="stylesheet" href="/static/css/light.css" media="(prefers-color-scheme: light)"/>
+		
+		<!-- Theme detection script (runs before render to prevent flash) -->
+		<script>
+			(function() {
+				var theme = localStorage.getItem('theme') || 
+					(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+				document.documentElement.setAttribute('data-theme', theme);
+			})();
+		</script>
+	</head>
+	<body>
+		<!-- Navigation -->
+		<nav class="navbar">
+			<div class="container flex justify-between items-center">
+				<a href="/" class="navbar-brand">Myrmidons</a>
+				
+				<ul class="navbar-nav flex gap-lg">
+					<li><a href="/browse">Browse</a></li>
+					<li><a href="/orders">Orders</a></li>
+					<li><a href="/wallet">Wallet</a></li>
+					<li><a href="/dao">DAO</a></li>
+					<li><a href="/reserves">Reserves</a></li>
+				</ul>
+				
+				<div class="flex items-center gap-md">
+					<!-- Theme Toggle -->
+					<button 
+						class="theme-toggle" 
+						onclick="toggleTheme()"
+						title="Toggle theme"
+					>
+						<svg class="theme-toggle-icon" viewBox="0 0 24 24">
+							<path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+						</svg>
+					</button>
+					
+					<!-- Language selector -->
+					<select class="form-select" onchange="changeLocale(this.value)" style="width: auto;">
+						<option value="en">EN</option>
+						<option value="ru">RU</option>
+						<option value="de">DE</option>
+						<option value="fr">FR</option>
+						<option value="es">ES</option>
+						<option value="zh">ZH</option>
+						<option value="ja">JA</option>
+						<option value="pt">PT</option>
+						<option value="ar">AR</option>
+						<option value="it">IT</option>
+					</select>
+					
+					if tc.User != nil {
+						<span>Welcome, { tc.User.Username }</span>
+						<a href="/logout">Logout</a>
+					} else {
+						<a href="/login">Login</a>
+						<a href="/register">Register</a>
+					}
+				</div>
+			</div>
+		</nav>
+		
+		<!-- Main Content -->
+		<main class="container mt-lg">
+			for _, child := range children {
+				@child
+			}
+		</main>
+		
+		<!-- Footer -->
+		<footer class="footer">
+			<div class="container footer-content">
+				<ul class="footer-links">
+					<li><a href="/support">Support</a></li>
+					<li><a href="/faq">FAQ</a></li>
+					<li><a href="/reserves">Reserves</a></li>
+					<li><a href="/dao">DAO</a></li>
+				</ul>
+				<p class="footer-copyright">Myrmidons © 2025 - Privacy-Preserving Marketplace</p>
+			</div>
+		</footer>
+		
+		<!-- Theme toggle script (no-JS alternative: CSS prefers-color-scheme) -->
+		<script>
+			function toggleTheme() {
+				var current = document.documentElement.getAttribute('data-theme');
+				var next = current === 'dark' ? 'light' : 'dark';
+				document.documentElement.setAttribute('data-theme', next);
+				localStorage.setItem('theme', next);
+			}
+			
+			function changeLocale(locale) {
+				localStorage.setItem('locale', locale);
+				window.location.reload();
+			}
+		</script>
+	</body>
+	</html>
+}
+
+// ProductCard renders a product card
+templ ProductCard(product Product) {
+	<a href={ templ.URL("/product/" + product.Slug) } class="product-card">
+		<img 
+			src={ product.ImageURL } 
+			alt={ product.Title }
+			class="product-card-image"
+		/>
+		<div class="product-card-body">
+			<h3 class="product-card-title">{ product.Title }</h3>
+			<p class="product-card-vendor">by { product.VendorName }</p>
+			<div class="flex justify-between items-center">
+				<span class="product-card-price">{ product.Price } XMR</span>
+				if product.IsDigital {
+					<span class="badge badge-secondary">Digital</span>
+				}
+			</div>
+		</div>
+	</a>
+}
+
+// Product represents a product for display
+type Product struct {
+	ID        string
+	Title     string
+	Slug      string
+	VendorName string
+	Price     string
+	ImageURL  string
+	IsDigital bool
+}
+
+// WalletBalance renders the wallet balance display
+templ WalletBalance(balance string) {
+	<div class="wallet-balance">
+		<p class="wallet-balance-label">Your Balance</p>
+		<p class="wallet-balance-amount">{ balance } XMR</p>
+	</div>
+}
+
+// OrderStatus renders an order status badge
+templ OrderStatus(status string) {
+	<span class={ "status-badge", "status-" + status }>
+		{ status }
+	</span>
+}
+
+// OrderCard renders an order summary card
+templ OrderCard(order Order) {
+	<a href={ templ.URL("/order/" + order.ID) } class="card">
+		<div class="flex justify-between items-center">
+			<div>
+				<h3>Order #{ order.ShortID }</h3>
+				<p class="text-muted">{ order.VendorName }</p>
+			</div>
+			<div class="text-right">
+				<p class="text-lg">{ order.Total } XMR</p>
+				@OrderStatus(order.Status)
+			</div>
+		</div>
+	</a>
+}
+
+// Order represents an order for display
+type Order struct {
+	ID       string
+	ShortID  string
+	VendorName string
+	Total    string
+	Status   string
+}
+
+// DisputeCard renders a dispute card for jury
+templ DisputeCard(dispute Dispute) {
+	<div class="card dispute-card">
+		<h3>Dispute #{ dispute.ShortID }</h3>
+		
+		<div class="card-body">
+			<p><strong>Vendor:</strong> { dispute.VendorName }</p>
+			<p><strong>Buyer:</strong> { dispute.BuyerName }</p>
+			<p><strong>Amount:</strong> { dispute.Amount } XMR</p>
+		</div>
+		
+		<div class="card-body">
+			<h4>Buyer's Statement</h4>
+			<p>{ dispute.BuyerStatement }</p>
+			
+			<h4>Vendor's Statement</h4>
+			<p>{ dispute.VendorStatement }</p>
+		</div>
+		
+		<div class="card-footer">
+			<form method="post" action="/jury/vote">
+				<input type="hidden" name="dispute_id" value={ dispute.ID }/>
+				<input type="hidden" name="support_buyer" value="true"/>
+				<button type="submit" class="btn btn-primary">Refund Buyer</button>
+			</form>
+			
+			<form method="post" action="/jury/vote">
+				<input type="hidden" name="dispute_id" value={ dispute.ID }/>
+				<input type="hidden" name="support_buyer" value="false"/>
+				<button type="submit" class="btn btn-secondary">Pay Vendor</button>
+			</form>
+		</div>
+	</div>
+}
+
+// Dispute represents a dispute for display
+type Dispute struct {
+	ID              string
+	ShortID         string
+	VendorName      string
+	BuyerName       string
+	Amount          string
+	BuyerStatement  string
+	VendorStatement string
+}
+
+// ProposalCard renders a DAO proposal card
+templ ProposalCard(proposal Proposal) {
+	<div class="card proposal-card">
+		<div class="flex justify-between items-center">
+			<h3>{ proposal.Title }</h3>
+			<span class={ "badge", "badge-" + proposal.StatusClass }>
+				{ proposal.Status }
+			</span>
+		</div>
+		
+		<p class="mt-md">{ proposal.Description }</p>
+		
+		<div class="flex gap-lg mt-md">
+			<div>
+				<span class="text-muted">Yes:</span>
+				<strong class="text-success">{ proposal.YesVotes }</strong>
+			</div>
+			<div>
+				<span class="text-muted">No:</span>
+				<strong class="text-error">{ proposal.NoVotes }</strong>
+			</div>
+			<div>
+				<span class="text-muted">Expires:</span>
+				<strong>{ proposal.ExpiresIn }</strong>
+			</div>
+		</div>
+		
+		if proposal.CanVote {
+			<div class="card-footer">
+				<form method="post" action={ "/dao/proposals/" + proposal.ID + "/vote" }>
+					<input type="hidden" name="support" value="true"/>
+					<button type="submit" class="btn btn-success">Vote Yes</button>
+				</form>
+				
+				<form method="post" action={ "/dao/proposals/" + proposal.ID + "/vote" }>
+					<input type="hidden" name="support" value="false"/>
+					<button type="submit" class="btn btn-danger">Vote No</button>
+				</form>
+			</div>
+		}
+	</div>
+}
+
+// Proposal represents a DAO proposal for display
+type Proposal struct {
+	ID          string
+	Title       string
+	Description string
+	Status      string
+	StatusClass string
+	YesVotes    string
+	NoVotes     string
+	ExpiresIn   string
+	CanVote     bool
+}
+
+// Alert renders a styled alert message
+templ Alert(message string, type_ string) {
+	<div class={ "alert", "alert-" + type_ }>
+		<span>{ message }</span>
+	</div>
+}
+
+// Pagination renders pagination controls
+templ Pagination(current, total int) {
+	if total > 1 {
+		<nav class="flex justify-center gap-sm mt-lg">
+			if current > 1 {
+				<a href={ templ.URL("?page=" + string(rune(current-1))) } class="btn btn-secondary">Previous</a>
+			}
+			
+			<span class="p-sm">
+				Page { current } of { total }
+			</span>
+			
+			if current < total {
+				<a href={ templ.URL("?page=" + string(rune(current+1))) } class="btn btn-secondary">Next</a>
+			}
+		</nav>
+	}
+}
