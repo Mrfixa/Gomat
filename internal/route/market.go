@@ -77,7 +77,9 @@ func RouteMarket(app *application.Application) http.Handler {
 
 			r.Get("/register", app.Register)
 			r.Get("/login", app.Login)
-			r.Post("/register", app.HandleRegister)
+			
+			// Rate limit registration: 3 per hour per IP
+			r.With(httprate.LimitByIP(3, time.Hour)).Post("/register", app.HandleRegister)
 			r.Post("/login", app.HandleLogin)
 			r.Post("/login/2fa", app.Handle2FA)
 		})
