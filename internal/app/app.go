@@ -16,5 +16,7 @@ type Application struct {
 	MinioClient      *minio.Client
 	PaymentProcessor provider.PaymentProvider
 	RiverClient      *river.Client[pgx.Tx]
+	IPRateLimiter    *IPRateLimiter
+	IPTracking       *IPTracking
 	uow.UoW
 }

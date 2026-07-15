@@ -116,11 +116,23 @@ services:
       "--minio-sa-key=${MINIO_SA_KEY}"
     ]
     restart: unless-stopped
+    # SECURE: Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    # SECURE: Graceful shutdown
+    stop_grace_period: 30s
     healthcheck:
-      test: curl --fail localhost:4420/health
-      interval: 5s
+      test: curl --fail -s -o /dev/null localhost:4420/health || exit 1
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
+      start_period: 10s
     depends_on:
       db:
         condition: service_healthy
@@ -143,6 +155,17 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    # SECURE: Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.2'
+          memory: 128M
+    # SECURE: Graceful shutdown
+    stop_grace_period: 30s
     depends_on:
       worker:
         condition: service_healthy

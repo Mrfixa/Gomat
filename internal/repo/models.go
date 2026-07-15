@@ -242,6 +242,22 @@ type ExchangeRate struct {
 	UpdatedAt time.Time
 }
 
+// SECURE: Login attempt tracking for account lockout
+type LoginAttempt struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	IPAddress   string
+	AttemptedAt time.Time
+}
+
+// SECURE: Password history for preventing reuse
+type PasswordHistory struct {
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	PasswordHash string
+	CreatedAt    time.Time
+}
+
 type Invoice struct {
 	ID                 uuid.UUID
 	Address            string

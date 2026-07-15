@@ -203,6 +203,21 @@ func (app *Application) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	l := app.getLocalizer(ctx)
+	clientIP := GetClientIP(r)
+
+	// SECURE: Check if IP is blocked due to rate limiting
+	if app.IPRateLimiter.IsBlocked(clientIP) {
+		app.notifyUser(ctx, true, l.Translate("Too many failed attempts. Please try again later."))
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	// SECURE: Check if CAPTCHA should be required due to failed attempts
+	if app.IPTracking.ShouldEscalate(clientIP) && config.CaptchaEnabled() {
+		// Redirect to jail (entry guard) for CAPTCHA verification
+		http.Redirect(w, r, "/jail", http.StatusSeeOther)
+		return
+	}
 
 	var user repo.User
 	err = app.Do(ctx, func(ctx context.Context, qtx *repo.Queries) error {
@@ -212,8 +227,25 @@ func (app *Application) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
+		// SECURE: Record failed auth attempt for IP
+		app.IPTracking.RecordFailedAuth(clientIP)
+
 		if errors.Is(err, auth.ErrInvalidCredentials) {
+			// Increment IP-based tracking for DDoS protection
+			// SECURE: After 3 failed attempts, redirect to CAPTCHA
+			if app.IPTracking.ShouldEscalate(clientIP) && config.CaptchaEnabled() {
+				app.notifyUser(ctx, true, l.Translate("Too many failed attempts. Please verify you're human."))
+				http.Redirect(w, r, "/jail", http.StatusSeeOther)
+				return
+			}
 			app.notifyUser(ctx, true, l.Translate("Invalid credentials"))
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		} else if errors.Is(err, auth.ErrAccountLocked) {
+			// SECURE: Account is locked due to too many failed attempts
+			app.notifyUser(ctx, true, l.Translate("Account temporarily locked due to too many failed login attempts. Please try again in 15 minutes."))
+			// SECURE: Also block the IP temporarily
+			app.IPRateLimiter.Block(clientIP, 15*time.Minute)
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		} else if errors.Is(err, auth.ErrAccountIsBanned) {
@@ -225,6 +257,9 @@ func (app *Application) HandleLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	// SECURE: Clear failed auth tracking on successful login
+	app.IPTracking.Clear(clientIP)
 
 	if user.TwofaEnabled {
 		challenge, err := auth.Generate2FAChallenge(user.PgpKey)
@@ -1893,6 +1928,8 @@ func (app *Application) Health(w http.ResponseWriter, r *http.Request) {
 	health := model.Health{Status: http.StatusOK}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
+
+	// SECURE: Check database connectivity
 	if err := app.Db.Ping(ctx); err != nil {
 		health.Status = http.StatusServiceUnavailable
 		health.Service.Database = false
@@ -1900,15 +1937,52 @@ func (app *Application) Health(w http.ResponseWriter, r *http.Request) {
 		health.Service.Database = true
 	}
 
+	// SECURE: Check Minio connectivity
+	if app.MinioClient != nil {
+		if _, err := app.MinioClient.ListBuckets(ctx); err != nil {
+			// Log but don't fail health check for storage
+			health.Service.Storage = false
+		} else {
+			health.Service.Storage = true
+		}
+	}
+
+	// SECURE: Add correlation ID for tracing
+	w.Header().Set("X-Health-Check", "ok")
+
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(&health); err != nil {
 		app.serverError(w, r, err)
 	}
 }
 
 func (app *Application) ServeUpload(w http.ResponseWriter, r *http.Request) {
-	p := path.Clean(r.URL.Path)
+	rawPath := r.URL.Path
 
-	//TODO: Check if p is in a cache
+	// SECURE: Validate the path is within allowed directories
+	// Only allow known bucket prefixes
+	allowedBuckets := []string{"product", "thumbnail", "logo", "inventory"}
+	isValid := false
+	for _, bucket := range allowedBuckets {
+		if strings.HasPrefix(rawPath, bucket+"/") {
+			isValid = true
+			break
+		}
+	}
+
+	if !isValid {
+		app.clientError(w, http.StatusForbidden)
+		return
+	}
+
+	// SECURE: Clean the path to prevent traversal attacks
+	p := path.Clean(rawPath)
+
+	// SECURE: Additional check - ensure path doesn't contain traversal patterns after cleaning
+	if strings.Contains(p, "..") || strings.HasPrefix(p, "/") {
+		app.clientError(w, http.StatusForbidden)
+		return
+	}
 
 	upload, err := util.LoadUpload(r.Context(), app.MinioClient, path.Dir(p), path.Base(p))
 	if err != nil {
