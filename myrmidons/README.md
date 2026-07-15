@@ -69,18 +69,56 @@ docker-compose logs -f app
 
 ```bash
 ./myrmidons --help
-Usage of ./myrmidons:
-  --addr string
-        HTTP listen address (default "127.0.0.1:4000")
-  --captcha
-        Enable CAPTCHA challenges (default true)
-  --dev
-        Development mode (default false)
-  --entry-guard
-        Enable entry guard (jail) (default true)
-  --name string
-        Site name (default "Myrmidons")
 ```
+
+## Security
+
+### OWASP Top 10 Compliance
+
+| Vulnerability | Mitigation |
+|--------------|------------|
+| A01 - Broken Access Control | IDOR checks, authorization middleware |
+| A02 - Cryptographic Failures | bcrypt, CSRF tokens, PGP 2FA |
+| A03 - Injection | sqlc parameterized queries |
+| A04 - Insecure Design | Advisory locks, rate limiting |
+| A05 - Security Misconfiguration | Security headers, HSTS |
+| A06 - Vulnerable Components | Dependency scanning |
+| A07 - Auth Failures | Account lockout, IP tracking |
+| A08 - Data Integrity | Path validation, checksums |
+| A09 - Logging | Structured logging, correlation IDs |
+| A10 - SSRF | Tor integration for RPC |
+
+### Built-in Protections
+
+- **bcrypt** password hashing with history (12 rounds)
+- **Account lockout** after 5 failed attempts (15 min)
+- **PGP 2FA** with RSA-OAEP encryption
+- **CAPTCHA** from onion address recognition
+- **Proof of Work** for bot mitigation (16-bit difficulty)
+- **Rate limiting** per IP and session
+- **CSRF tokens** on all forms
+- **Parameterized SQL** queries (sqlc)
+- **Advisory locks** for wallet operations
+- **Security headers** (CSP, HSTS, X-Frame-Options)
+
+### Security Headers
+
+```
+Content-Security-Policy: default-src 'self'
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Strict-Transport-Security: max-age=31536000
+Referrer-Policy: same-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+Cache-Control: no-store, no-cache, must-revalidate
+```
+
+### Zero JavaScript
+
+All pages work without JavaScript. Features use:
+- CSS `:hover` and `:focus`
+- HTML `<form>` with server-side validation
+- CSS transitions and animations
 
 ## Architecture
 
@@ -112,26 +150,6 @@ PENDING → PAID → ACCEPTED → DISPATCHED → DELIVERED → FINALIZED
               ↓         ↓
           DECLINED   DISPUTE → JURY → REFUNDED/FINALIZED
 ```
-
-## Security
-
-### Built-in Protections
-
-- **bcrypt** password hashing with history
-- **Account lockout** after 5 failed attempts
-- **PGP 2FA** with RSA-OAEP encryption
-- **CAPTCHA** from onion address recognition
-- **Proof of Work** for bot mitigation
-- **Rate limiting** per IP and session
-- **CSRF tokens** on all forms
-- **Parameterized SQL** queries (sqlc)
-
-### Zero JavaScript
-
-All pages work without JavaScript. Interactive features use:
-- CSS `:hover` and `:focus`
-- HTML `<form>` with server-side validation
-- CSS transitions and animations
 
 ## Development
 
